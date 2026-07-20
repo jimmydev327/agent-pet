@@ -85,6 +85,9 @@ function App() {
   useEffect(() => {
     const unlistenState = listen('state-changed', (event) => {
       const newState = event.payload
+      // The backend re-announces the current state on every message (self-heal),
+      // so ignore repeats — only restart the animation on an actual change.
+      if (stateRef.current === newState) return
       stateRef.current = newState
       setCurrentState(newState)
       frameRef.current = 0

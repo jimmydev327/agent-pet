@@ -299,13 +299,16 @@ impl PetStateMachine {
 
         match target_state.parse::<PetState>() {
             Ok(new_state) => {
-                if new_state != self.current_state {
-                    self.current_state = new_state;
+                self.current_state = new_state;
 
-                    // Notify frontend of state change
-                    if let Some(window) = self.app_handle.get_webview_window("pet") {
-                        let _ = window.emit("state-changed", self.current_state.to_string());
-                    }
+                // Always re-announce the current state, even if unchanged. The
+                // frontend can miss the single transition event if it's emitted
+                // before the webview's listener is ready (races app startup),
+                // which would leave the pet stuck on idle. Re-announcing on every
+                // message (incl. the bridge heartbeat) makes it self-healing; the
+                // frontend ignores repeats so this doesn't cause animation stutter.
+                if let Some(window) = self.app_handle.get_webview_window("pet") {
+                    let _ = window.emit("state-changed", self.current_state.to_string());
                 }
                 new_state
             }
