@@ -192,15 +192,19 @@ function App() {
   }
 
   const getStateDuration = (state) => {
+    // Momentary reactions self-clear back to idle. Continuous "live activity"
+    // states (running/waiting/review) persist until the source explicitly
+    // changes them — otherwise the frontend auto-idles while the backend still
+    // thinks it's running, and repeat triggers get deduped as "no change".
     const durations = {
       waving: 2000,
       jumping: 2000,
       failed: 3000,
-      running: 5000,
-      'running-right': 5000,
-      'running-left': 5000,
-      waiting: 10000,
-      review: 5000,
+      running: Infinity,
+      'running-right': Infinity,
+      'running-left': Infinity,
+      waiting: Infinity,
+      review: Infinity,
       idle: Infinity,
     }
     return durations[state] || 5000
