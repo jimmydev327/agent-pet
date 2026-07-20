@@ -34,6 +34,9 @@ const STATE_MAP = {
 // the current state on a heartbeat faster than that auto-idle, and only log on
 // an actual change to keep the log readable.
 const HEARTBEAT_MS = 4000;
+// If the feed delivers no bytes (not even the server's 25s keepalive) for this
+// long, treat the connection as dead and reconnect.
+const FEED_IDLE_MS = 35000;
 
 let ws = null;
 let wsReady = false;
@@ -100,17 +103,35 @@ function sendToPet() {
 
 async function consumeFeed() {
   for (;;) {
+    // Watchdog: a half-open SSE socket (e.g. after the Mac sleeps) delivers no
+    // data and never errors, so reader.read() would hang forever. The server
+    // sends a keepalive ping every 25s, so if we get nothing for FEED_IDLE_MS
+    // we abort and reconnect.
+    const ac = new AbortController();
+    let watchdog = null;
+    const arm = () => {
+      if (watchdog) clearTimeout(watchdog);
+      watchdog = setTimeout(() => {
+        log("feed idle >", FEED_IDLE_MS, "ms; forcing reconnect");
+        ac.abort();
+      }, FEED_IDLE_MS);
+    };
     try {
       log("connecting feed:", FEED_URL);
-      const res = await fetch(FEED_URL, { headers: { Accept: "text/event-stream" } });
+      const res = await fetch(FEED_URL, {
+        headers: { Accept: "text/event-stream" },
+        signal: ac.signal,
+      });
       if (!res.ok || !res.body) throw new Error("feed HTTP " + res.status);
       log("feed connected");
+      arm();
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
       for (;;) {
         const { value, done } = await reader.read();
         if (done) break;
+        arm(); // got bytes (data or keepalive) -> reset watchdog
         buf += dec.decode(value, { stream: true });
         let idx;
         while ((idx = buf.indexOf("\n\n")) >= 0) {
@@ -129,8 +150,10 @@ async function consumeFeed() {
       throw new Error("feed stream ended");
     } catch (e) {
       log("feed error:", e.message, "- retry 3s");
-      await new Promise((r) => setTimeout(r, 3000));
+    } finally {
+      if (watchdog) clearTimeout(watchdog);
     }
+    await new Promise((r) => setTimeout(r, 3000));
   }
 }
 
