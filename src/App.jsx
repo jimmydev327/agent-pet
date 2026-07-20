@@ -244,6 +244,7 @@ function App() {
     try {
       const list = await invoke('get_pet_list')
       const validPet =
+        list.find(p => p.id === 'jimmy' && p.has_spritesheet) ||
         list.find(p => p.id === 'claude' && p.has_spritesheet) ||
         list.find(p => p.has_spritesheet) ||
         list[0]
