@@ -29,9 +29,15 @@ const STATE_MAP = {
   idle: "idle",
 };
 
+// The pet auto-returns to idle after ~5s and collapses distinct feed states
+// that share an animation (e.g. coding/delegating -> processing). So we re-send
+// the current state on a heartbeat faster than that auto-idle, and only log on
+// an actual change to keep the log readable.
+const HEARTBEAT_MS = 4000;
+
 let ws = null;
 let wsReady = false;
-let lastSent = null;
+let lastLogged = null;
 let pendingState = "idle";
 let pendingTask = "";
 
@@ -48,9 +54,9 @@ function connectPetWs() {
   ws = sock;
   sock.addEventListener("open", () => {
     wsReady = true;
-    lastSent = null; // force resend of current state on (re)connect
+    lastLogged = null; // re-log current state on (re)connect
     log("pet ws connected:", PET_WS);
-    pushState(pendingState, pendingTask, true);
+    sendToPet();
   });
   sock.addEventListener("close", () => {
     wsReady = false;
@@ -64,21 +70,29 @@ function connectPetWs() {
   sock.addEventListener("message", () => { /* acks ignored */ });
 }
 
-function pushState(state, task, force = false) {
+function pushState(state, task) {
   pendingState = state;
   pendingTask = task || "";
-  const messageType = STATE_MAP[state] || "processing";
+  sendToPet();
+}
+
+// Sends the current pending state to the pet. Called on every feed event AND on
+// a heartbeat, so active animations stay alive despite the pet's 5s auto-idle.
+// Only logs when the mapped animation actually changes.
+function sendToPet() {
   if (!wsReady) return;
-  if (!force && messageType === lastSent) return; // de-dupe repeats
-  lastSent = messageType;
+  const messageType = STATE_MAP[pendingState] || "processing";
   try {
     ws.send(JSON.stringify({
       message_type: messageType,
       source: "jimmy",
-      payload: { state, task: pendingTask },
+      payload: { state: pendingState, task: pendingTask },
       timestamp: Date.now(),
     }));
-    log("-> pet:", state, "=>", messageType);
+    if (messageType !== lastLogged) {
+      log("-> pet:", pendingState, "=>", messageType);
+      lastLogged = messageType;
+    }
   } catch (e) {
     log("send failed:", e.message);
   }
@@ -123,3 +137,4 @@ async function consumeFeed() {
 log("jimmy-bridge starting | feed:", FEED_URL, "| pet:", PET_WS);
 connectPetWs();
 consumeFeed();
+setInterval(sendToPet, HEARTBEAT_MS); // keep active animation alive vs auto-idle
