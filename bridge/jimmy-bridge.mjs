@@ -41,6 +41,7 @@ const FEED_IDLE_MS = 35000;
 let ws = null;
 let wsReady = false;
 let lastLogged = null;
+let lastAckSig = null;
 let pendingState = "idle";
 let pendingTask = "";
 
@@ -70,7 +71,18 @@ function connectPetWs() {
     log("pet ws error:", (e && e.message) || "");
     try { sock.close(); } catch {}
   });
-  sock.addEventListener("message", () => { /* acks ignored */ });
+  sock.addEventListener("message", (ev) => {
+    let r;
+    try { r = JSON.parse(typeof ev.data === "string" ? ev.data : ""); } catch { return; }
+    if (!r) return;
+    if (r.type === "connected") { log("<- pet welcome:", r.protocol || ""); return; }
+    // Log the pet's verdict, but only when it changes, to keep the log readable.
+    const sig = r.type + ":" + (r.current_state || "");
+    if (sig !== lastAckSig) {
+      lastAckSig = sig;
+      log("<- pet:", r.type, r.current_state ? `(state=${r.current_state})` : "", r.message || "");
+    }
+  });
 }
 
 function pushState(state, task) {
