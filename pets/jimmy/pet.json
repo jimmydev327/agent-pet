@@ -1,6 +1,6 @@
 {
   "id": "jimmy",
   "displayName": "Jimmy",
-  "description": "Jimmy — Daniel's OpenClaw assistant. A white pixel-art dog that mirrors Jimmy's live activity in real time.",
-  "spritesheetPath": "spritesheet.webp"
+  "description": "Jimmy the wizard companion.",
+  "spritesheetPath": "spritesheet.png"
 }

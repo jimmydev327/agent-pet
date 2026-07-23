@@ -8,7 +8,7 @@ use std::path::{Component, Path, PathBuf};
 use thiserror::Error;
 
 pub const COLUMNS: u32 = 8;
-pub const ROWS: u32 = 9;
+pub const ROWS: u32 = 11;
 pub const CELL_WIDTH: u32 = 192;
 pub const CELL_HEIGHT: u32 = 208;
 pub const ATLAS_WIDTH: u32 = COLUMNS * CELL_WIDTH;
@@ -28,6 +28,8 @@ pub enum PetState {
     Waiting,      // row 6, 6 frames
     Running,      // row 7, 6 frames
     Review,       // row 8, 6 frames
+    Typing,       // row 9, 8 frames - editing/writing code
+    Browsing,     // row 10, 6 frames - driving a browser
 }
 
 impl PetState {
@@ -42,6 +44,8 @@ impl PetState {
             PetState::Waiting => 6,
             PetState::Running => 7,
             PetState::Review => 8,
+            PetState::Typing => 9,
+            PetState::Browsing => 10,
         }
     }
 
@@ -56,6 +60,8 @@ impl PetState {
             PetState::Waiting => 6,
             PetState::Running => 6,
             PetState::Review => 6,
+            PetState::Typing => 8,
+            PetState::Browsing => 6,
         }
     }
 
@@ -70,6 +76,8 @@ impl PetState {
             PetState::Waiting => vec![150, 150, 150, 150, 150, 260],
             PetState::Running => vec![120, 120, 120, 120, 120, 220],
             PetState::Review => vec![150, 150, 150, 150, 150, 280],
+            PetState::Typing => vec![130, 130, 130, 130, 130, 130, 130, 220],
+            PetState::Browsing => vec![160, 160, 160, 160, 160, 260],
         }
     }
 }
@@ -89,6 +97,8 @@ impl std::fmt::Display for PetState {
                 PetState::Waiting => "waiting",
                 PetState::Running => "running",
                 PetState::Review => "review",
+                PetState::Typing => "typing",
+                PetState::Browsing => "browsing",
             }
         )
     }
@@ -108,6 +118,8 @@ impl std::str::FromStr for PetState {
             "waiting" => Ok(PetState::Waiting),
             "running" => Ok(PetState::Running),
             "review" => Ok(PetState::Review),
+            "typing" => Ok(PetState::Typing),
+            "browsing" => Ok(PetState::Browsing),
             _ => Err(format!("Unknown state: {}", s)),
         }
     }

@@ -17,14 +17,16 @@ const PET_WS = process.env.JIMMY_PET_WS || "ws://127.0.0.1:8765";
 // Jimmy feed state -> agent-pet message_type (see src-tauri/src/message.rs).
 // The pet maps message_type -> animation via its message map:
 //   processing->running, new_message->waving, waiting_input->waiting,
-//   review_required->review, error->failed, idle->idle
+//   review_required->review, error->failed, idle->idle,
+//   typing->typing, browsing->browsing (direct state triggers)
 const STATE_MAP = {
   coding: "processing",
-  writing: "processing",
+  writing: "typing",
   researching: "processing",
   reading: "processing",
   thinking: "processing",
   delegating: "processing",
+  browsing: "browsing",
   messaging: "new_message",
   idle: "idle",
 };

@@ -190,6 +190,8 @@ function App() {
       waiting: [150, 150, 150, 150, 150, 260],
       running: [120, 120, 120, 120, 120, 220],
       review: [150, 150, 150, 150, 150, 280],
+      typing: [130, 130, 130, 130, 130, 130, 130, 220],
+      browsing: [160, 160, 160, 160, 160, 260],
     }
     return durations[state] || [200]
   }
@@ -209,6 +211,8 @@ function App() {
       waiting: Infinity,
       review: Infinity,
       idle: Infinity,
+      typing: Infinity,
+      browsing: Infinity,
     }
     return durations[state] || 5000
   }

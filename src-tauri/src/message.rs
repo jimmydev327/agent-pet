@@ -34,6 +34,8 @@ pub const MSG_WAVING: &str = "waving";
 pub const MSG_FAILED: &str = "failed";
 pub const MSG_WAITING: &str = "waiting";
 pub const MSG_REVIEW: &str = "review";
+pub const MSG_TYPING: &str = "typing";
+pub const MSG_BROWSING: &str = "browsing";
 
 /// Default message map: message_type -> pet_state
 ///
@@ -56,6 +58,8 @@ pub fn default_message_map() -> std::collections::HashMap<String, String> {
     map.insert(MSG_FAILED.to_string(), "failed".to_string());
     map.insert(MSG_WAITING.to_string(), "waiting".to_string());
     map.insert(MSG_REVIEW.to_string(), "review".to_string());
+    map.insert(MSG_TYPING.to_string(), "typing".to_string());
+    map.insert(MSG_BROWSING.to_string(), "browsing".to_string());
     map
 }
 
@@ -142,6 +146,8 @@ mod tests {
             MSG_FAILED,
             MSG_WAITING,
             MSG_REVIEW,
+            MSG_TYPING,
+            MSG_BROWSING,
         ];
         for key in &expected_keys {
             assert!(
@@ -170,6 +176,8 @@ mod tests {
             "waiting",
             "running",
             "review",
+            "typing",
+            "browsing",
         ]
         .iter()
         .copied()
