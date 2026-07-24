@@ -195,6 +195,7 @@ function App() {
       success: [150, 140, 140, 150, 160, 260],
       new_message: [220, 150, 180, 300, 150, 220],
       mention: [260, 150, 300, 300, 150, 260],
+      error: [280, 140, 320, 320, 140, 280],
     }
     return durations[state] || [200]
   }
@@ -210,6 +211,7 @@ function App() {
       success: 2500,
       new_message: 2500,
       mention: 2500,
+      error: 3000,
       failed: 3000,
       running: Infinity,
       'running-right': Infinity,

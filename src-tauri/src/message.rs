@@ -45,7 +45,7 @@ pub fn default_message_map() -> std::collections::HashMap<String, String> {
     let mut map = std::collections::HashMap::new();
     map.insert(MSG_NEW_MESSAGE.to_string(), "new_message".to_string());
     map.insert(MSG_MENTION.to_string(), "mention".to_string());
-    map.insert(MSG_ERROR.to_string(), "failed".to_string());
+    map.insert(MSG_ERROR.to_string(), "error".to_string());
     map.insert(MSG_PROCESSING.to_string(), "running".to_string());
     map.insert(MSG_WAITING_INPUT.to_string(), "waiting".to_string());
     map.insert(MSG_REVIEW_REQUIRED.to_string(), "review".to_string());
@@ -181,6 +181,7 @@ mod tests {
             "success",
             "new_message",
             "mention",
+            "error",
         ]
         .iter()
         .copied()
@@ -202,7 +203,7 @@ mod tests {
         // 核心语义映射校验
         assert_eq!(map[MSG_NEW_MESSAGE], "new_message");
         assert_eq!(map[MSG_MENTION], "mention");
-        assert_eq!(map[MSG_ERROR], "failed");
+        assert_eq!(map[MSG_ERROR], "error");
         assert_eq!(map[MSG_PROCESSING], "running");
         assert_eq!(map[MSG_WAITING_INPUT], "waiting");
         assert_eq!(map[MSG_REVIEW_REQUIRED], "review");

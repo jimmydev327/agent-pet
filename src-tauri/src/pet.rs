@@ -8,7 +8,7 @@ use std::path::{Component, Path, PathBuf};
 use thiserror::Error;
 
 pub const COLUMNS: u32 = 8;
-pub const ROWS: u32 = 14;
+pub const ROWS: u32 = 15;
 pub const CELL_WIDTH: u32 = 192;
 pub const CELL_HEIGHT: u32 = 208;
 pub const ATLAS_WIDTH: u32 = COLUMNS * CELL_WIDTH;
@@ -33,6 +33,7 @@ pub enum PetState {
     Success,      // row 11, 6 frames - task complete celebration
     NewMessage,   // row 12, 6 frames - an incoming message arrived
     Mention,      // row 13, 6 frames - someone @-mentioned him
+    Error,        // row 14, 6 frames - an error occurred (red alert)
 }
 
 impl PetState {
@@ -52,6 +53,7 @@ impl PetState {
             PetState::Success => 11,
             PetState::NewMessage => 12,
             PetState::Mention => 13,
+            PetState::Error => 14,
         }
     }
 
@@ -71,6 +73,7 @@ impl PetState {
             PetState::Success => 6,
             PetState::NewMessage => 6,
             PetState::Mention => 6,
+            PetState::Error => 6,
         }
     }
 
@@ -90,6 +93,7 @@ impl PetState {
             PetState::Success => vec![150, 140, 140, 150, 160, 260],
             PetState::NewMessage => vec![220, 150, 180, 300, 150, 220],
             PetState::Mention => vec![260, 150, 300, 300, 150, 260],
+            PetState::Error => vec![280, 140, 320, 320, 140, 280],
         }
     }
 }
@@ -114,6 +118,7 @@ impl std::fmt::Display for PetState {
                 PetState::Success => "success",
                 PetState::NewMessage => "new_message",
                 PetState::Mention => "mention",
+                PetState::Error => "error",
             }
         )
     }
@@ -138,6 +143,7 @@ impl std::str::FromStr for PetState {
             "success" => Ok(PetState::Success),
             "new_message" => Ok(PetState::NewMessage),
             "mention" => Ok(PetState::Mention),
+            "error" => Ok(PetState::Error),
             _ => Err(format!("Unknown state: {}", s)),
         }
     }
@@ -712,6 +718,7 @@ mod tests {
             PetState::Success,
             PetState::NewMessage,
             PetState::Mention,
+            PetState::Error,
         ]
     }
 }
