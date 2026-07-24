@@ -85,7 +85,7 @@ impl PetState {
             PetState::Typing => vec![130, 130, 130, 130, 130, 130, 130, 220],
             PetState::Browsing => vec![160, 160, 160, 160, 160, 260],
             PetState::Success => vec![150, 140, 140, 150, 160, 260],
-            PetState::NewMessage => vec![150, 150, 150, 150, 150, 150],
+            PetState::NewMessage => vec![220, 150, 180, 300, 150, 220],
         }
     }
 }
