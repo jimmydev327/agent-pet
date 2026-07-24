@@ -8,7 +8,7 @@ use std::path::{Component, Path, PathBuf};
 use thiserror::Error;
 
 pub const COLUMNS: u32 = 8;
-pub const ROWS: u32 = 15;
+pub const ROWS: u32 = 16;
 pub const CELL_WIDTH: u32 = 192;
 pub const CELL_HEIGHT: u32 = 208;
 pub const ATLAS_WIDTH: u32 = COLUMNS * CELL_WIDTH;
@@ -34,6 +34,7 @@ pub enum PetState {
     NewMessage,   // row 12, 6 frames - an incoming message arrived
     Mention,      // row 13, 6 frames - someone @-mentioned him
     Error,        // row 14, 6 frames - an error occurred (red alert)
+    ReviewRequired, // row 15, 6 frames - presenting finished work for approval (amber)
 }
 
 impl PetState {
@@ -54,6 +55,7 @@ impl PetState {
             PetState::NewMessage => 12,
             PetState::Mention => 13,
             PetState::Error => 14,
+            PetState::ReviewRequired => 15,
         }
     }
 
@@ -74,6 +76,7 @@ impl PetState {
             PetState::NewMessage => 6,
             PetState::Mention => 6,
             PetState::Error => 6,
+            PetState::ReviewRequired => 6,
         }
     }
 
@@ -94,6 +97,7 @@ impl PetState {
             PetState::NewMessage => vec![220, 150, 180, 300, 150, 220],
             PetState::Mention => vec![260, 150, 300, 300, 150, 260],
             PetState::Error => vec![300, 180, 260, 260, 180, 300],
+            PetState::ReviewRequired => vec![240, 160, 300, 300, 160, 240],
         }
     }
 }
@@ -119,6 +123,7 @@ impl std::fmt::Display for PetState {
                 PetState::NewMessage => "new_message",
                 PetState::Mention => "mention",
                 PetState::Error => "error",
+                PetState::ReviewRequired => "review_required",
             }
         )
     }
@@ -144,6 +149,7 @@ impl std::str::FromStr for PetState {
             "new_message" => Ok(PetState::NewMessage),
             "mention" => Ok(PetState::Mention),
             "error" => Ok(PetState::Error),
+            "review_required" => Ok(PetState::ReviewRequired),
             _ => Err(format!("Unknown state: {}", s)),
         }
     }
@@ -719,6 +725,7 @@ mod tests {
             PetState::NewMessage,
             PetState::Mention,
             PetState::Error,
+            PetState::ReviewRequired,
         ]
     }
 }
