@@ -73,7 +73,7 @@ impl PetState {
             PetState::Success => 6,
             PetState::NewMessage => 6,
             PetState::Mention => 6,
-            PetState::Error => 8,
+            PetState::Error => 6,
         }
     }
 
@@ -93,7 +93,7 @@ impl PetState {
             PetState::Success => vec![150, 140, 140, 150, 160, 260],
             PetState::NewMessage => vec![220, 150, 180, 300, 150, 220],
             PetState::Mention => vec![260, 150, 300, 300, 150, 260],
-            PetState::Error => vec![150, 140, 140, 150, 220, 150, 140, 140],
+            PetState::Error => vec![300, 180, 260, 260, 180, 300],
         }
     }
 }
