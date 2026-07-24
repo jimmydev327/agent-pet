@@ -8,7 +8,7 @@ use std::path::{Component, Path, PathBuf};
 use thiserror::Error;
 
 pub const COLUMNS: u32 = 8;
-pub const ROWS: u32 = 13;
+pub const ROWS: u32 = 14;
 pub const CELL_WIDTH: u32 = 192;
 pub const CELL_HEIGHT: u32 = 208;
 pub const ATLAS_WIDTH: u32 = COLUMNS * CELL_WIDTH;
@@ -32,6 +32,7 @@ pub enum PetState {
     Browsing,     // row 10, 6 frames - driving a browser
     Success,      // row 11, 6 frames - task complete celebration
     NewMessage,   // row 12, 6 frames - an incoming message arrived
+    Mention,      // row 13, 6 frames - someone @-mentioned him
 }
 
 impl PetState {
@@ -50,6 +51,7 @@ impl PetState {
             PetState::Browsing => 10,
             PetState::Success => 11,
             PetState::NewMessage => 12,
+            PetState::Mention => 13,
         }
     }
 
@@ -68,6 +70,7 @@ impl PetState {
             PetState::Browsing => 6,
             PetState::Success => 6,
             PetState::NewMessage => 6,
+            PetState::Mention => 6,
         }
     }
 
@@ -86,6 +89,7 @@ impl PetState {
             PetState::Browsing => vec![160, 160, 160, 160, 160, 260],
             PetState::Success => vec![150, 140, 140, 150, 160, 260],
             PetState::NewMessage => vec![220, 150, 180, 300, 150, 220],
+            PetState::Mention => vec![260, 150, 300, 300, 150, 260],
         }
     }
 }
@@ -109,6 +113,7 @@ impl std::fmt::Display for PetState {
                 PetState::Browsing => "browsing",
                 PetState::Success => "success",
                 PetState::NewMessage => "new_message",
+                PetState::Mention => "mention",
             }
         )
     }
@@ -132,6 +137,7 @@ impl std::str::FromStr for PetState {
             "browsing" => Ok(PetState::Browsing),
             "success" => Ok(PetState::Success),
             "new_message" => Ok(PetState::NewMessage),
+            "mention" => Ok(PetState::Mention),
             _ => Err(format!("Unknown state: {}", s)),
         }
     }
@@ -705,6 +711,7 @@ mod tests {
             PetState::Browsing,
             PetState::Success,
             PetState::NewMessage,
+            PetState::Mention,
         ]
     }
 }
