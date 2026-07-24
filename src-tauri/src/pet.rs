@@ -8,7 +8,7 @@ use std::path::{Component, Path, PathBuf};
 use thiserror::Error;
 
 pub const COLUMNS: u32 = 8;
-pub const ROWS: u32 = 16;
+pub const ROWS: u32 = 17;
 pub const CELL_WIDTH: u32 = 192;
 pub const CELL_HEIGHT: u32 = 208;
 pub const ATLAS_WIDTH: u32 = COLUMNS * CELL_WIDTH;
@@ -35,6 +35,7 @@ pub enum PetState {
     Mention,      // row 13, 6 frames - someone @-mentioned him
     Error,        // row 14, 6 frames - an error occurred (red alert)
     ReviewRequired, // row 15, 8 frames - presenting finished work for approval (amber)
+    WaitingInput,   // row 16, 8 frames - asked a question, awaiting your reply (cyan prompt)
 }
 
 impl PetState {
@@ -56,6 +57,7 @@ impl PetState {
             PetState::Mention => 13,
             PetState::Error => 14,
             PetState::ReviewRequired => 15,
+            PetState::WaitingInput => 16,
         }
     }
 
@@ -77,6 +79,7 @@ impl PetState {
             PetState::Mention => 6,
             PetState::Error => 6,
             PetState::ReviewRequired => 8,
+            PetState::WaitingInput => 8,
         }
     }
 
@@ -98,6 +101,7 @@ impl PetState {
             PetState::Mention => vec![260, 150, 300, 300, 150, 260],
             PetState::Error => vec![300, 180, 260, 260, 180, 300],
             PetState::ReviewRequired => vec![230, 150, 150, 150, 300, 150, 150, 230],
+            PetState::WaitingInput => vec![220, 160, 160, 300, 160, 160, 220, 300],
         }
     }
 }
@@ -124,6 +128,7 @@ impl std::fmt::Display for PetState {
                 PetState::Mention => "mention",
                 PetState::Error => "error",
                 PetState::ReviewRequired => "review_required",
+                PetState::WaitingInput => "waiting_input",
             }
         )
     }
@@ -150,6 +155,7 @@ impl std::str::FromStr for PetState {
             "mention" => Ok(PetState::Mention),
             "error" => Ok(PetState::Error),
             "review_required" => Ok(PetState::ReviewRequired),
+            "waiting_input" => Ok(PetState::WaitingInput),
             _ => Err(format!("Unknown state: {}", s)),
         }
     }
@@ -726,6 +732,7 @@ mod tests {
             PetState::Mention,
             PetState::Error,
             PetState::ReviewRequired,
+            PetState::WaitingInput,
         ]
     }
 }

@@ -47,7 +47,7 @@ pub fn default_message_map() -> std::collections::HashMap<String, String> {
     map.insert(MSG_MENTION.to_string(), "mention".to_string());
     map.insert(MSG_ERROR.to_string(), "error".to_string());
     map.insert(MSG_PROCESSING.to_string(), "running".to_string());
-    map.insert(MSG_WAITING_INPUT.to_string(), "waiting".to_string());
+    map.insert(MSG_WAITING_INPUT.to_string(), "waiting_input".to_string());
     map.insert(MSG_REVIEW_REQUIRED.to_string(), "review_required".to_string());
     map.insert(MSG_SUCCESS.to_string(), "success".to_string());
     map.insert(MSG_IDLE.to_string(), "idle".to_string());
@@ -183,6 +183,7 @@ mod tests {
             "mention",
             "error",
             "review_required",
+            "waiting_input",
         ]
         .iter()
         .copied()
@@ -206,7 +207,7 @@ mod tests {
         assert_eq!(map[MSG_MENTION], "mention");
         assert_eq!(map[MSG_ERROR], "error");
         assert_eq!(map[MSG_PROCESSING], "running");
-        assert_eq!(map[MSG_WAITING_INPUT], "waiting");
+        assert_eq!(map[MSG_WAITING_INPUT], "waiting_input");
         assert_eq!(map[MSG_REVIEW_REQUIRED], "review_required");
         assert_eq!(map[MSG_SUCCESS], "success");
         assert_eq!(map[MSG_IDLE], "idle");

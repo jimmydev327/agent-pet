@@ -196,7 +196,8 @@ function App() {
       new_message: [220, 150, 180, 300, 150, 220],
       mention: [260, 150, 300, 300, 150, 260],
       error: [300, 180, 260, 260, 180, 300],
-      review_required: [240, 160, 300, 300, 160, 240],
+      review_required: [230, 150, 150, 150, 300, 150, 150, 230],
+      waiting_input: [220, 160, 160, 300, 160, 160, 220, 300],
     }
     return durations[state] || [200]
   }
@@ -220,6 +221,7 @@ function App() {
       waiting: Infinity,
       review: Infinity,
       review_required: Infinity,
+      waiting_input: Infinity,
       idle: Infinity,
       typing: Infinity,
       browsing: Infinity,
