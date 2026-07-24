@@ -34,7 +34,7 @@ pub enum PetState {
     NewMessage,   // row 12, 6 frames - an incoming message arrived
     Mention,      // row 13, 6 frames - someone @-mentioned him
     Error,        // row 14, 6 frames - an error occurred (red alert)
-    ReviewRequired, // row 15, 6 frames - presenting finished work for approval (amber)
+    ReviewRequired, // row 15, 8 frames - presenting finished work for approval (amber)
 }
 
 impl PetState {
@@ -76,7 +76,7 @@ impl PetState {
             PetState::NewMessage => 6,
             PetState::Mention => 6,
             PetState::Error => 6,
-            PetState::ReviewRequired => 6,
+            PetState::ReviewRequired => 8,
         }
     }
 
@@ -97,7 +97,7 @@ impl PetState {
             PetState::NewMessage => vec![220, 150, 180, 300, 150, 220],
             PetState::Mention => vec![260, 150, 300, 300, 150, 260],
             PetState::Error => vec![300, 180, 260, 260, 180, 300],
-            PetState::ReviewRequired => vec![240, 160, 300, 300, 160, 240],
+            PetState::ReviewRequired => vec![230, 150, 150, 150, 300, 150, 150, 230],
         }
     }
 }

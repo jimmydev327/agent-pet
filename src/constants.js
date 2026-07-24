@@ -66,5 +66,5 @@ export const FRAME_COUNTS = {
   new_message: 6,
   mention: 6,
   error: 6,
-  review_required: 6,
+  review_required: 8,
 }
