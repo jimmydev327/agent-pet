@@ -192,6 +192,7 @@ function App() {
       review: [150, 150, 150, 150, 150, 280],
       typing: [130, 130, 130, 130, 130, 130, 130, 220],
       browsing: [160, 160, 160, 160, 160, 260],
+      success: [150, 140, 140, 150, 160, 260],
     }
     return durations[state] || [200]
   }
@@ -204,6 +205,7 @@ function App() {
     const durations = {
       waving: 2000,
       jumping: 2000,
+      success: 2500,
       failed: 3000,
       running: Infinity,
       'running-right': Infinity,

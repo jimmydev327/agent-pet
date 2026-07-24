@@ -8,7 +8,7 @@ use std::path::{Component, Path, PathBuf};
 use thiserror::Error;
 
 pub const COLUMNS: u32 = 8;
-pub const ROWS: u32 = 11;
+pub const ROWS: u32 = 12;
 pub const CELL_WIDTH: u32 = 192;
 pub const CELL_HEIGHT: u32 = 208;
 pub const ATLAS_WIDTH: u32 = COLUMNS * CELL_WIDTH;
@@ -30,6 +30,7 @@ pub enum PetState {
     Review,       // row 8, 6 frames
     Typing,       // row 9, 8 frames - editing/writing code
     Browsing,     // row 10, 6 frames - driving a browser
+    Success,      // row 11, 6 frames - task complete celebration
 }
 
 impl PetState {
@@ -46,6 +47,7 @@ impl PetState {
             PetState::Review => 8,
             PetState::Typing => 9,
             PetState::Browsing => 10,
+            PetState::Success => 11,
         }
     }
 
@@ -62,6 +64,7 @@ impl PetState {
             PetState::Review => 6,
             PetState::Typing => 8,
             PetState::Browsing => 6,
+            PetState::Success => 6,
         }
     }
 
@@ -78,6 +81,7 @@ impl PetState {
             PetState::Review => vec![150, 150, 150, 150, 150, 280],
             PetState::Typing => vec![130, 130, 130, 130, 130, 130, 130, 220],
             PetState::Browsing => vec![160, 160, 160, 160, 160, 260],
+            PetState::Success => vec![150, 140, 140, 150, 160, 260],
         }
     }
 }
@@ -99,6 +103,7 @@ impl std::fmt::Display for PetState {
                 PetState::Review => "review",
                 PetState::Typing => "typing",
                 PetState::Browsing => "browsing",
+                PetState::Success => "success",
             }
         )
     }
@@ -120,6 +125,7 @@ impl std::str::FromStr for PetState {
             "review" => Ok(PetState::Review),
             "typing" => Ok(PetState::Typing),
             "browsing" => Ok(PetState::Browsing),
+            "success" => Ok(PetState::Success),
             _ => Err(format!("Unknown state: {}", s)),
         }
     }
@@ -408,11 +414,16 @@ pub fn validate_spritesheet(path: &Path) -> Result<(u32, u32), PetError> {
 
     validate_spritesheet_extension(path)?;
 
+    // Pets share a fixed 8-column grid and 192x208 cell, but may define a
+    // different number of animation rows (e.g. Jimmy adds a `success` row that
+    // the stock pets don't have). So require the canonical width and a height
+    // that is a whole number of rows, rather than one exact atlas size.
     let dimensions = image::image_dimensions(path)?;
-    if dimensions != (ATLAS_WIDTH, ATLAS_HEIGHT) {
+    let (width, height) = dimensions;
+    if width != ATLAS_WIDTH || height == 0 || height % CELL_HEIGHT != 0 {
         return Err(PetError::InvalidSpritesheet(format!(
-            "Expected {}x{}, got {}x{}",
-            ATLAS_WIDTH, ATLAS_HEIGHT, dimensions.0, dimensions.1,
+            "Expected width {} and height a positive multiple of {}, got {}x{}",
+            ATLAS_WIDTH, CELL_HEIGHT, width, height,
         )));
     }
 
@@ -619,8 +630,9 @@ mod tests {
     #[test]
     fn validate_spritesheet_accepts_builtin_claude_dimensions() {
         let path = builtin_pets_dir().join("claude").join("spritesheet.webp");
-        let dimensions = validate_spritesheet(&path).unwrap();
-        assert_eq!(dimensions, (ATLAS_WIDTH, ATLAS_HEIGHT));
+        let (width, height) = validate_spritesheet(&path).unwrap();
+        assert_eq!(width, ATLAS_WIDTH);
+        assert_eq!(height % CELL_HEIGHT, 0, "height must be a whole number of rows");
     }
 
     // ── 路径安全 ──────────────────────────────────────────────
@@ -683,6 +695,9 @@ mod tests {
             PetState::Waiting,
             PetState::Running,
             PetState::Review,
+            PetState::Typing,
+            PetState::Browsing,
+            PetState::Success,
         ]
     }
 }

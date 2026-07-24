@@ -1,4 +1,4 @@
-import { ATLAS_HEIGHT, ATLAS_WIDTH } from './constants'
+import { ATLAS_WIDTH } from './constants'
 
 function PetWindow({
   bubble,
@@ -40,7 +40,9 @@ function PetWindow({
           style={{
             backgroundImage: `url(${spritesheet})`,
             backgroundPosition: getBackgroundPosition(),
-            backgroundSize: `${ATLAS_WIDTH * petScale}px ${ATLAS_HEIGHT * petScale}px`,
+            // Height is `auto` so a pet sheet with extra rows (e.g. Jimmy's
+            // success row) scales by the same factor as the fixed-width grid.
+            backgroundSize: `${ATLAS_WIDTH * petScale}px auto`,
             width: displayWidth,
             height: displayHeight,
           }}

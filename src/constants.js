@@ -1,7 +1,7 @@
 export const CELL_WIDTH = 192
 export const CELL_HEIGHT = 208
 export const ATLAS_WIDTH = 1536
-export const ATLAS_HEIGHT = 2288
+export const ATLAS_HEIGHT = 2496
 export const MIN_WINDOW_WIDTH = 240
 export const BUBBLE_SPACE_HEIGHT = 92
 export const CODEX_ORIGINAL_SCALE = 0.45
@@ -43,6 +43,7 @@ export const STATE_ROWS = {
   review: 8,
   typing: 9,
   browsing: 10,
+  success: 11,
 }
 
 export const FRAME_COUNTS = {
@@ -57,4 +58,5 @@ export const FRAME_COUNTS = {
   review: 6,
   typing: 8,
   browsing: 6,
+  success: 6,
 }
