@@ -8,7 +8,7 @@ use std::path::{Component, Path, PathBuf};
 use thiserror::Error;
 
 pub const COLUMNS: u32 = 8;
-pub const ROWS: u32 = 12;
+pub const ROWS: u32 = 13;
 pub const CELL_WIDTH: u32 = 192;
 pub const CELL_HEIGHT: u32 = 208;
 pub const ATLAS_WIDTH: u32 = COLUMNS * CELL_WIDTH;
@@ -31,6 +31,7 @@ pub enum PetState {
     Typing,       // row 9, 8 frames - editing/writing code
     Browsing,     // row 10, 6 frames - driving a browser
     Success,      // row 11, 6 frames - task complete celebration
+    NewMessage,   // row 12, 6 frames - an incoming message arrived
 }
 
 impl PetState {
@@ -48,6 +49,7 @@ impl PetState {
             PetState::Typing => 9,
             PetState::Browsing => 10,
             PetState::Success => 11,
+            PetState::NewMessage => 12,
         }
     }
 
@@ -65,6 +67,7 @@ impl PetState {
             PetState::Typing => 8,
             PetState::Browsing => 6,
             PetState::Success => 6,
+            PetState::NewMessage => 6,
         }
     }
 
@@ -82,6 +85,7 @@ impl PetState {
             PetState::Typing => vec![130, 130, 130, 130, 130, 130, 130, 220],
             PetState::Browsing => vec![160, 160, 160, 160, 160, 260],
             PetState::Success => vec![150, 140, 140, 150, 160, 260],
+            PetState::NewMessage => vec![150, 150, 150, 150, 150, 150],
         }
     }
 }
@@ -104,6 +108,7 @@ impl std::fmt::Display for PetState {
                 PetState::Typing => "typing",
                 PetState::Browsing => "browsing",
                 PetState::Success => "success",
+                PetState::NewMessage => "new_message",
             }
         )
     }
@@ -126,6 +131,7 @@ impl std::str::FromStr for PetState {
             "typing" => Ok(PetState::Typing),
             "browsing" => Ok(PetState::Browsing),
             "success" => Ok(PetState::Success),
+            "new_message" => Ok(PetState::NewMessage),
             _ => Err(format!("Unknown state: {}", s)),
         }
     }
@@ -698,6 +704,7 @@ mod tests {
             PetState::Typing,
             PetState::Browsing,
             PetState::Success,
+            PetState::NewMessage,
         ]
     }
 }
