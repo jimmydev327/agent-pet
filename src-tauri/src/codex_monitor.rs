@@ -1,7 +1,8 @@
 // Watches Codex session JSONL files and maps live Codex activity to pet messages.
 
 use crate::message::{
-    MSG_ERROR, MSG_MENTION, MSG_NEW_MESSAGE, MSG_PROCESSING, MSG_SUCCESS, MSG_WAITING_INPUT,
+    MSG_BROWSING, MSG_ERROR, MSG_MENTION, MSG_NEW_MESSAGE, MSG_PROCESSING, MSG_REVIEW, MSG_SUCCESS,
+    MSG_TYPING, MSG_WAITING_INPUT,
 };
 use crate::state_machine::PetStateMachine;
 use serde_json::Value;
@@ -605,8 +606,9 @@ fn claude_line_to_activity(line: &str) -> Option<CodexActivity> {
             }
 
             let message = value.get("message")?;
-            if message_has_tool_use(message) {
-                Some(activity(MSG_PROCESSING, "Working..."))
+            if let Some(tool) = first_claude_tool_name(message) {
+                let (message_type, bubble) = classify_tool_state(&tool);
+                Some(activity(message_type, bubble))
             } else {
                 Some(CodexActivity {
                     message_type: MSG_NEW_MESSAGE,
@@ -653,7 +655,13 @@ fn openclaw_line_to_activity(line: &str) -> Option<CodexActivity> {
             } else if message.get("stopReason").and_then(Value::as_str) == Some("error") {
                 Some(activity(MSG_ERROR, "Something failed"))
             } else if has_tool_call {
-                Some(activity(MSG_PROCESSING, "Working..."))
+                match first_openclaw_tool_name(message) {
+                    Some(tool) => {
+                        let (message_type, bubble) = classify_tool_state(&tool);
+                        Some(activity(message_type, bubble))
+                    }
+                    None => Some(activity(MSG_PROCESSING, "Working...")),
+                }
             } else {
                 Some(activity(MSG_SUCCESS, "Done"))
             }
@@ -1116,18 +1124,6 @@ fn content_value_to_text(content: &Value) -> Option<String> {
     }
 }
 
-fn message_has_tool_use(message: &Value) -> bool {
-    message
-        .get("content")
-        .and_then(Value::as_array)
-        .map(|items| {
-            items
-                .iter()
-                .any(|item| item.get("type").and_then(Value::as_str) == Some("tool_use"))
-        })
-        .unwrap_or(false)
-}
-
 fn message_has_openclaw_tool_call(message: &Value) -> bool {
     message
         .get("content")
@@ -1141,6 +1137,55 @@ fn message_has_openclaw_tool_call(message: &Value) -> bool {
             })
         })
         .unwrap_or(false)
+}
+
+/// Map a tool name to the pet state it should drive, plus a short bubble label.
+/// Names may be MCP-prefixed (e.g. "mcp__openclaw__browser"), so match on substrings.
+fn classify_tool_state(name: &str) -> (&'static str, &'static str) {
+    let t = name.to_ascii_lowercase();
+    let has = |needle: &str| t.contains(needle);
+    if has("browser") {
+        (MSG_BROWSING, "Browsing")
+    } else if has("web_search") || has("websearch") {
+        (MSG_BROWSING, "Searching the web")
+    } else if has("web_fetch") || has("webfetch") {
+        (MSG_BROWSING, "Reading a page")
+    } else if has("write") || has("edit") || has("notebook") {
+        (MSG_TYPING, "Editing code")
+    } else if has("read") || has("grep") || has("glob") || has("explore") {
+        (MSG_REVIEW, "Reading the code")
+    } else if has("bash") || has("exec") || has("shell") {
+        (MSG_PROCESSING, "Running a command")
+    } else {
+        (MSG_PROCESSING, "Working...")
+    }
+}
+
+/// First `tool_use` block name in a Claude-format assistant message.
+fn first_claude_tool_name(message: &Value) -> Option<String> {
+    message
+        .get("content")
+        .and_then(Value::as_array)?
+        .iter()
+        .find(|item| item.get("type").and_then(Value::as_str) == Some("tool_use"))
+        .and_then(|item| item.get("name").and_then(Value::as_str))
+        .map(str::to_string)
+}
+
+/// First `toolCall` block name in an OpenClaw-format assistant message.
+fn first_openclaw_tool_name(message: &Value) -> Option<String> {
+    message
+        .get("content")
+        .and_then(Value::as_array)?
+        .iter()
+        .find(|item| item.get("type").and_then(Value::as_str) == Some("toolCall"))
+        .and_then(|item| {
+            item.get("name")
+                .or_else(|| item.get("toolName"))
+                .or_else(|| item.get("tool"))
+                .and_then(Value::as_str)
+        })
+        .map(str::to_string)
 }
 
 fn format_source_bubble_text(source: &str, text: &str) -> String {
@@ -1255,6 +1300,32 @@ mod tests {
     fn maps_codex_task_complete_to_success() {
         let line = r#"{"type":"event_msg","payload":{"type":"task_complete"}}"#;
         assert_eq!(codex_line_to_message_type(line), Some(MSG_SUCCESS));
+    }
+
+    #[test]
+    fn classifies_tools_to_distinct_states() {
+        // edits -> typing
+        assert_eq!(classify_tool_state("Edit").0, MSG_TYPING);
+        assert_eq!(classify_tool_state("Write").0, MSG_TYPING);
+        assert_eq!(classify_tool_state("NotebookEdit").0, MSG_TYPING);
+        // browser / web -> browsing (names may be MCP-prefixed)
+        assert_eq!(classify_tool_state("mcp__openclaw__browser").0, MSG_BROWSING);
+        assert_eq!(classify_tool_state("mcp__openclaw__web_search").0, MSG_BROWSING);
+        assert_eq!(classify_tool_state("WebFetch").0, MSG_BROWSING);
+        // reads/searches -> review
+        assert_eq!(classify_tool_state("Read").0, MSG_REVIEW);
+        assert_eq!(classify_tool_state("Grep").0, MSG_REVIEW);
+        // commands / unknown -> processing (running)
+        assert_eq!(classify_tool_state("Bash").0, MSG_PROCESSING);
+        assert_eq!(classify_tool_state("SomeUnknownTool").0, MSG_PROCESSING);
+    }
+
+    #[test]
+    fn claude_tool_use_drives_specific_state_not_generic() {
+        let edit = r#"{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Edit","input":{}}]}}"#;
+        assert_eq!(claude_line_to_activity(edit).unwrap().message_type, MSG_TYPING);
+        let browse = r#"{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__openclaw__browser","input":{}}]}}"#;
+        assert_eq!(claude_line_to_activity(browse).unwrap().message_type, MSG_BROWSING);
     }
 
     #[test]
