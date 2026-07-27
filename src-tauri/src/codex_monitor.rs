@@ -173,7 +173,14 @@ fn enabled_source_path(sm: &PetStateMachine, source: &str) -> Option<PathBuf> {
 struct FileCursor {
     path: Option<PathBuf>,
     offset: u64,
+    /// When the followed file last grew. Used for stickiness so we don't thrash
+    /// between several concurrently-active sessions and drop states mid-action.
+    last_grow: Option<SystemTime>,
 }
+
+/// Keep following the current session this long after its last write before
+/// allowing a switch to a newer session's transcript.
+const SESSION_STICKY_MS: u128 = 4000;
 
 #[derive(Default)]
 struct OpencodeCursor {
@@ -202,14 +209,36 @@ async fn poll_jsonl_source(
     file_filter: fn(&Path) -> bool,
     parser: fn(&str) -> Option<CodexActivity>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let Some(path) = newest_jsonl_file(root, file_filter)? else {
+    let Some(newest) = newest_jsonl_file(root, file_filter)? else {
         return Ok(());
+    };
+
+    // Pick the file to follow with stickiness: if a *different* session is now
+    // newest, only switch to it once the session we're already following has
+    // gone quiet for SESSION_STICKY_MS. This stops the pet thrashing between
+    // concurrently-active sessions (e.g. a coding session + this chat) and
+    // dropping states like `typing` mid-action.
+    let path = match cursor.path.clone() {
+        Some(current) if current != newest => {
+            let has_unread = fs::metadata(&current).map(|m| m.len()).unwrap_or(0) > cursor.offset;
+            let recently_active = cursor
+                .last_grow
+                .and_then(|t| t.elapsed().ok())
+                .map_or(false, |d| d.as_millis() < SESSION_STICKY_MS);
+            if has_unread || recently_active {
+                current
+            } else {
+                newest
+            }
+        }
+        _ => newest,
     };
 
     if cursor.path.as_ref() != Some(&path) {
         let len = fs::metadata(&path)?.len();
         cursor.path = Some(path);
         cursor.offset = len;
+        cursor.last_grow = Some(SystemTime::now());
         if let Some(activity) = latest_activity_in_file(cursor.path.as_ref().unwrap(), parser)? {
             emit_activity(state_machine, source, activity).await;
         }
@@ -223,6 +252,7 @@ async fn poll_jsonl_source(
     if len == cursor.offset {
         return Ok(());
     }
+    cursor.last_grow = Some(SystemTime::now());
 
     let mut file = File::open(&path)?;
     file.seek(SeekFrom::Start(cursor.offset))?;
