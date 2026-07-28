@@ -640,10 +640,15 @@ fn claude_line_to_activity(line: &str) -> Option<CodexActivity> {
                 let (message_type, bubble) = classify_tool_state(&tool);
                 Some(activity(message_type, bubble))
             } else {
+                let text = claude_message_text(&value);
+                let message_type = if text.as_deref().map_or(false, reply_awaits_user) {
+                    MSG_WAITING_INPUT
+                } else {
+                    MSG_NEW_MESSAGE
+                };
                 Some(CodexActivity {
-                    message_type: MSG_NEW_MESSAGE,
-                    bubble_text: claude_message_text(&value)
-                        .or_else(|| Some("Replied".to_string())),
+                    message_type,
+                    bubble_text: text.or_else(|| Some("Replied".to_string())),
                     origin: ActivityOrigin::Assistant,
                 })
             }
@@ -677,8 +682,13 @@ fn openclaw_line_to_activity(line: &str) -> Option<CodexActivity> {
             let has_tool_call = message_has_openclaw_tool_call(message);
 
             if let Some(text) = text {
+                let message_type = if reply_awaits_user(&text) {
+                    MSG_WAITING_INPUT
+                } else {
+                    MSG_NEW_MESSAGE
+                };
                 Some(CodexActivity {
-                    message_type: MSG_NEW_MESSAGE,
+                    message_type,
                     bubble_text: Some(text),
                     origin: ActivityOrigin::Assistant,
                 })
@@ -1191,6 +1201,13 @@ fn classify_tool_state(name: &str) -> (&'static str, &'static str) {
     }
 }
 
+/// True when an assistant reply reads as a question to the user, so the pet can
+/// show `waiting_input` ("your turn") instead of a plain `new_message`.
+fn reply_awaits_user(text: &str) -> bool {
+    text.trim_end_matches(|c: char| c.is_whitespace() || c == '"' || c == '\'' || c == ')')
+        .ends_with('?')
+}
+
 /// First `tool_use` block name in a Claude-format assistant message.
 fn first_claude_tool_name(message: &Value) -> Option<String> {
     message
@@ -1348,6 +1365,20 @@ mod tests {
         // commands / unknown -> processing (running)
         assert_eq!(classify_tool_state("Bash").0, MSG_PROCESSING);
         assert_eq!(classify_tool_state("SomeUnknownTool").0, MSG_PROCESSING);
+    }
+
+    #[test]
+    fn question_reply_maps_to_waiting_input() {
+        assert!(reply_awaits_user("Want me to wire that up?"));
+        assert!(reply_awaits_user("Which is it? "));
+        assert!(reply_awaits_user("Ready to go?\""));
+        assert!(!reply_awaits_user("Done — pushed as abc123."));
+        assert!(!reply_awaits_user("All six animations are wired up."));
+
+        let q = r#"{"type":"assistant","message":{"content":[{"type":"text","text":"Want me to do the fix?"}]}}"#;
+        assert_eq!(claude_line_to_activity(q).unwrap().message_type, MSG_WAITING_INPUT);
+        let s = r#"{"type":"assistant","message":{"content":[{"type":"text","text":"All done."}]}}"#;
+        assert_eq!(claude_line_to_activity(s).unwrap().message_type, MSG_NEW_MESSAGE);
     }
 
     #[test]
